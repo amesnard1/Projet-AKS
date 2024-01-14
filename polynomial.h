@@ -1,12 +1,15 @@
 #ifndef POLYNOMIAL_H
 #define POLYNOMIAL_H
 
-void zero_poly(long r, long* P);
-void copy_poly(long r, long* dest, const long* src);
-void naive_poly_mul_mod(long r, long n, long* result, long degP, const long* P, long degQ, const long* Q);
-void poly_mul_mod(long r, long n, long* result, const long* P, const long* Q);
-void poly_pow_mod(long r, long n, long* result, const long* P, long k);
-int is_zero_poly(long r, long* P);
-void print_poly(long r, const long* P, long k);
+void poly_init(unsigned long r, mpz_t* P);
+void poly_free(unsigned long r, mpz_t* P);
+void zero_poly(unsigned long r, mpz_t* P);
+void copy_poly(unsigned long r, mpz_t* dest, const mpz_t* src);
+void naive_poly_mul_mod(unsigned long r, mpz_t n, mpz_t* result, unsigned long
+        degP, const mpz_t* P, unsigned long degQ, const mpz_t* Q);
+void poly_mul_mod(unsigned long r, mpz_t n, mpz_t* result, const mpz_t* P, const mpz_t* Q);
+void poly_pow_mod(unsigned long r, mpz_t n, mpz_t* result, const mpz_t* P, mpz_t k);
+int is_zero_poly(unsigned long r, mpz_t* P);
+void print_poly(unsigned long r, const mpz_t* P, unsigned long k);
 
 #endif

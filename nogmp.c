@@ -1,78 +1,86 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include<math.h>
+#include<unistd.h>
 #include"arithmetic.h"
 #include"polynomial.h"
 
 
 // Check if the AKS equation for r, n, and a given.
-int eqn(long r, long n, long a) {
-    a = a % n;
-    long* P = (long*) malloc(r * sizeof(long));
-    long* Q = (long*) malloc(r * sizeof(long));
+int eqn(unsigned long r, mpz_t n, const mpz_t a) {
+    mpz_t a_; mpz_init(a_);
+    mpz_mod(a_, a, n);
+    mpz_t n_mod_r_mpz;
+    mpz_init(n_mod_r_mpz);
+    mpz_mod_ui(n_mod_r_mpz, n, r);
+    unsigned long n_mod_r = mpz_get_ui(n_mod_r_mpz);
+    // The following two lines are essentially
+    // why r has to be an unsigned long, not mpz_t
+    mpz_t* P = (mpz_t*) malloc(r * sizeof(mpz_t));
+    mpz_t* Q = (mpz_t*) malloc(r * sizeof(mpz_t));
+    poly_init(r, P); poly_init(r, Q);
     zero_poly(r, P);
     zero_poly(r, Q);
-    P[0] = a;
-    P[1] = 1;
+    mpz_set(P[0], a);
+    mpz_set_ui(P[1], 1);
     poly_pow_mod(r, n, Q, P, n);
-    Q[n % r] -= 1;
-    Q[0] -= a;
-    Q[n % r] = Q[n % r] % n;
-    Q[0] = Q[0] % n;
+    mpz_sub_ui(Q[n_mod_r], Q[n_mod_r], 1);
+    mpz_sub(Q[0], Q[0], a);
+    mpz_mod(Q[n_mod_r], Q[n_mod_r], n);
+    mpz_mod(Q[0], Q[0], n);
     int b = is_zero_poly(r, Q);
-    free(P); free(Q);
+    poly_free(r, P); poly_free(r, Q);
+    mpz_clear(a_);
     return b;
 }
 
 
 // The actual AKS algorithm
-int is_prime(long n) {
-    // First eliminate trivial cases that do not fit into the algorithm
-    if(n == 0 || n == 1) return 0;
-    if(is_perfect_power(n)) return 0; // AKS step 1
-    long r = min_r(n); // AKS step 2 (and most of 3)
-    // For the next line, recall that min_r returns 0 if it detects a proper
-    // factor of n before it finds an r such that o_r(n) > log^2 n.
-    if(r == 0) return 0; // AKS step 3
-    if(n <= r) return 1; // AKS step 4
-    for(long a = 1; a <= bound(r, n); a++) { // AKS step 5
-// Later, the following will be added conditional upon a --verbose flag from
-// shell.
-//        if(a % 10 == 0)
-//            printf("progress: %d/%d\n", a, bound(r, n));
+int is_prime(mpz_t n) {
+    if(mpz_perfect_power_p(n)) return 0; // AKS step 1
+    unsigned long r = min_r(n);
+    if(r == 0) return 0; // AKS steps 2 and 3
+    if(mpz_cmp_ui(n, r) <= 0) return 1; // AKS step 4
+    mpz_t limit, a, remainder;
+    mpz_init(limit);
+    mpz_init(a);
+    mpz_init(remainder);
+    bound(limit, r, n);
+    for(mpz_set_ui(a, 1); mpz_cmp(a, limit) <= 0; mpz_add_ui(a, a, 1)) { // AKS step 5
+        // TODO: add the possibility of a --verbose option to control logging
+        //       levels.
+        mpz_mod_ui(remainder, a, 50);
+        if(!mpz_sgn(remainder))
+            gmp_printf("progress: %Zd/%Zd\n", a, limit);
         if(!eqn(r, n, a)) return 0;
     }
+    mpz_clear(limit);
+    mpz_clear(a);
+    mpz_clear(remainder);
     return 1;
 }
 
 
 
 int main() {
-    printf("%d\n", floor_log2(20));
-    printf("%d\n", ipow(2, 4));
-    printf("%d\n", ipow(3, 5));
-    printf("%d\n", floor_root(1241, 5));
-    printf("%d\n", is_perfect_power(1419856));
-    printf("%d\n", is_perfect_power(1419857));
-    printf("%d\n", min_r(19997));
-    printf("%d\n", eqn(min_r(19997), 19997, 52));
-    long r = 10;
-    long* P = (long*) malloc(r * sizeof(long));
-    long* Q = (long*) malloc(r * sizeof(long));
-    long* R = (long*) malloc(r * sizeof(long));
-    zero_poly(r, P);
-    zero_poly(r, Q);
-    zero_poly(r, R);
-    P[0] = 7; P[1] = 5; P[2] = 3; P[3] = 2;
-    Q[0] = 1; Q[1] = 8; Q[2] = 4;
-    poly_mul_mod(r, 100, R, P, Q);
-    print_poly(r, R, r-1);
-    zero_poly(r, R);
-    poly_pow_mod(r, 18, R, P, 15);
-    print_poly(r, R, r-1);
-    for(int i = 1; i < 200; i++)
-        if(is_prime(i))
-            printf("n = %d; prime: %d\n", i, is_prime(i));
-    printf("%d", is_prime(672629));
+    mpz_t n;
+    mpz_init(n);
+    mpz_set_ui(n, 19997);
+    mpz_t a;
+    mpz_init(a);
+    mpz_set_ui(a, 52);
+    printf("%d\n", min_r(n));
+    printf("%d\n", eqn(min_r(n), n, a));
+    mpz_t i_mpz;
+    mpz_init(i_mpz);
+    int b;
+    for(unsigned long int i = 1; i < 200; i++) {
+        mpz_set_ui(i_mpz, i);
+        b = is_prime(i_mpz);
+        if(b)
+            printf("n = %d; prime: %d\n", i, b);
+    }
+    mpz_set_ui(i_mpz, 672629);
+    printf("%d", is_prime(i_mpz));
+    mpz_clear(i_mpz);
     return 0;
 }
