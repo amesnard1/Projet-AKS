@@ -1,9 +1,9 @@
-run: nogmp
-	./nogmp
+run: aks
+	./aks
 
-nogmp: nogmp.c arithmetic.c polynomial.c
-	gcc -lgmp -o nogmp nogmp.c arithmetic.c polynomial.c
+aks: aks.c arithmetic.c polynomial.c
+	gcc -lgmp -o aks aks.c arithmetic.c polynomial.c
 
 clean:
-	rm nogmp
+	rm aks
 
