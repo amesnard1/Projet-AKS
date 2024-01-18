@@ -40,8 +40,11 @@ unsigned long min_r(mpz_t n) {
         // Check if the order of n in Z_r is more than log^2.
         mpz_set_ui(lg2, mpz_sizeinbase(n, 2));
         mpz_mul(lg2, lg2, lg2);
+        mpz_set(power, n);
         for(mpz_set_ui(k, 1); mpz_cmp(k, lg2) <= 0; mpz_add_ui(k, k, 1)) { 
-            mpz_powm(power, n, k, big_r);
+            mpz_mul(power, power, n);
+            mpz_mod(power, power, big_r);
+            // mpz_powm(power, n, k, big_r);
             if(mpz_cmp_ui(power, 1) == 0) {
                 goto next_r; // This r doesn't work, skip to the next one (outer
                              // continue)
