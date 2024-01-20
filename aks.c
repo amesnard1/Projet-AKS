@@ -47,7 +47,6 @@ int is_prime(mpz_t n) {
     mpz_init(remainder);
     bound(limit, r, n);
     unsigned long limit_ui = mpz_get_ui(limit);
-    #pragma omp parallel for
     for(unsigned long a = 1; a < limit_ui; a++) { // AKS step 5
         // TODO: add the possibility of a --verbose option to control logging
         //       levels.
@@ -77,21 +76,22 @@ int main() {
     mpz_t a;
     mpz_init(a);
     mpz_set_ui(a, 52);
-    printf("%d\n", min_r(n));
+    printf("%ld\n", min_r(n));
     //printf("%d\n", eqn(min_r(n), n, a));
     mpz_t i_mpz;
     mpz_init(i_mpz);
     int b;
-    //for(unsigned long int i = 1; i < 200; i++) {
-    //    mpz_set_ui(i_mpz, i);
-    //    b = is_prime(i_mpz);
-    //    if(b)
-    //        printf("n = %d; prime: %d\n", i, b);
-    //}
-    //mpz_set_ui(i_mpz, 672629);
-    //mpz_set_ui(i_mpz, 542497301);
-    //mpz_set_ui(i_mpz, 54294967291);
-    //printf("%d", is_prime(i_mpz));
+    for(unsigned long int i = 1; i < 200; i++) {
+        mpz_set_ui(i_mpz, i);
+        //printf("n = %ld; r: %ld\n", i, min_r(i_mpz));
+        b = is_prime(i_mpz);
+        if(b)
+            printf("n = %ld; prime: %d\n", i, b);
+    }
+    mpz_set_ui(i_mpz, 672629);
+    mpz_set_ui(i_mpz, 542497301);
+    mpz_set_ui(i_mpz, 54294967291);
+    printf("%d", is_prime(i_mpz));
     clock_t start, end;
 
     unsigned long known_primes[] = {2, 5, 11, 23, 47, 97, 197, 397, 797, 1597,
@@ -101,26 +101,31 @@ int main() {
         13486073473, 26972146961, 53944293929, 107888587883, 215777175787,
         431554351609, 863108703229};
 
-//    for(int i = 0; i < 39; i++) {
-//        mpz_set_ui(i_mpz, known_primes[i]);
-//        start = clock();
-//        b = is_prime(i_mpz);
-//        end = clock();
-//        printf("%ld %dms\n", known_primes[i], ((end - start)*1000)/CLOCKS_PER_SEC);
-//    }
+    for(int i = 0; i < 39; i++) {
+        mpz_set_ui(i_mpz, known_primes[i]);
+        unsigned long r = min_r(i_mpz);
+        printf("%ld \t r: %ld \t phi: %ld\n", known_primes[i], r, euler(r));
+    }
 
     for(int i = 0; i < 39; i++) {
         mpz_set_ui(i_mpz, known_primes[i]);
-        printf("%ld r: %ld\n", known_primes[i], min_r(i_mpz));
+        start = clock();
+        b = is_prime(i_mpz);
+        end = clock();
+        printf("%ld %dms\n", known_primes[i], ((end - start)*1000)/CLOCKS_PER_SEC);
     }
 
     while(1) {
         printf("Input test number (base 10): ");
         gmp_scanf("%Zd", i_mpz);
         start = clock();
-        // b = is_prime(i_mpz);
+        //b = is_prime(i_mpz);
         end = clock();
-        printf("%ld r: %ld\n", mpz_get_ui(i_mpz), min_r(i_mpz) );
+        unsigned long r = min_r(i_mpz);
+        mpz_t bnd;
+        mpz_init(bnd);
+        bound(bnd, r, n);
+        printf("%ld r: %ld euler: %ld\n", mpz_get_ui(i_mpz), r, euler(r));
         //gmp_printf("%Zd prime: %d\tTime: %f r: \n", i_mpz, b, (float)(end - start)/CLOCKS_PER_SEC, min_r(i_mpz));
     }
         

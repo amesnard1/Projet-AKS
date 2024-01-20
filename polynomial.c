@@ -150,10 +150,7 @@ void karatsuba_poly_mul_mod(unsigned long r, mpz_t n, mpz_t* result, unsigned
 }
 
 
-// TODO use the naive multiplcation for small polynomials and implement FFT for
-// larger polynomials. May start with Karatsuba, get a working implementation,
-// then move to FFT to get the correct complexity, but perhaps it's a waste of
-// time.
+// Multiply polynomials P and Q and store into result.
 void poly_mul_mod(unsigned long r, mpz_t n, mpz_t* result, const mpz_t* P, const mpz_t* Q) {
     zero_poly(r, result);
     karatsuba_poly_mul_mod(r, n, result, r, P, r, Q);
@@ -204,30 +201,3 @@ int is_zero_poly(unsigned long r, mpz_t* P) {
         if(mpz_sgn(P[i]) != 0) return 0;
     return 1;
 }
-
-// Print the terms of degree <= k
-// Yes, k is an unsigned long, but there's no human way to read anything that
-// go beyond the bounds of an int.
-//void print_poly(unsigned long r, const mpz_t* P, unsigned long k) {
-//    int b = 0;
-//    if(P[0]) {
-//        gmp_printf("%Zd ", P[0]);
-//        b = 1;
-//    }
-//    if(P[1]) {
-//        if(b)
-//            printf("+ ");
-//        gmp_printf("%Zd x ", P[1]);
-//        b = 1;
-//    }
-//    for(unsigned long i = 2; i <= k; i++) {
-//        if(P[i]) {
-//            if(b)
-//                printf("+ ");
-//            gmp_printf("%Zd x^%d ", P[i], i);
-//            b = 1;
-//        }
-//    }
-//    printf("\n");
-//}
-
