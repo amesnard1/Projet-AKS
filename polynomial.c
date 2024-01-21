@@ -87,8 +87,10 @@ void naive_poly_mul_mod(unsigned long r, mpz_t n, mpz_t* result, unsigned long
 }
 
 
+// Evaluates Karatsuba multiplication on polynomials, with a special case for
+// squaring (same asymptotic complexity, but less work copying)
 void karatsuba_poly_mul_mod(unsigned long r, mpz_t n, mpz_t* result, unsigned
-        long n_P, const mpz_t* P, unsigned long n_Q, const mpz_t* Q) {
+        long n_P, const mpz_t* P, unsigned long n_Q, const mpz_t* Q, int square) {
     // If the polynomials are small enough, favor the trivial multiplication
     // which would be faster.
     if(n_P < 30 || n_Q < 30) {
@@ -109,6 +111,7 @@ void karatsuba_poly_mul_mod(unsigned long r, mpz_t n, mpz_t* result, unsigned
 
     mpz_t* P0Q0 = (mpz_t*) malloc(max_n_poly * sizeof(mpz_t));
     mpz_t* P1Q1 = (mpz_t*) malloc(max_n_poly * sizeof(mpz_t));
+
     // R = (P1 + P0) (Q1 + Q0)
     mpz_t* R = (mpz_t*) malloc(max_n_poly * sizeof(mpz_t));
     // RP = (P1 + P0)
@@ -119,24 +122,34 @@ void karatsuba_poly_mul_mod(unsigned long r, mpz_t n, mpz_t* result, unsigned
     poly_init(max_n_poly, P0Q0);
     poly_init(max_n_poly, P1Q1);
     poly_init(max_n_poly, R);
-    poly_init(max_n_poly, RP);
-    poly_init(max_n_poly, RQ);
+    if(!square) {
+        poly_init(max_n_poly, RP);
+        poly_init(max_n_poly, RQ);
+    }
 
-    zero_poly(max_n_poly, P0Q0);
-    zero_poly(max_n_poly, P1Q1);
-    zero_poly(max_n_poly, R);
-    zero_poly(max_n_poly, RP);
-    zero_poly(max_n_poly, RQ);
-
-    karatsuba_poly_mul_mod(r, n, P0Q0, m, P0, m, Q0);
-    karatsuba_poly_mul_mod(r, n, P1Q1, n_P - m, P1, n_P - m, Q1);
-    add_mod_poly(n, RP, m, P0, n_P - m, P1);
-    add_mod_poly(n, RQ, m, Q0, n_Q - m, Q1);
+    karatsuba_poly_mul_mod(r, n, P0Q0, m, P0, m, Q0, square);
+    karatsuba_poly_mul_mod(r, n, P1Q1, n_P - m, P1, n_P - m, Q1, square);
+    if(square) {
+        RP = P0;
+        RQ = P1;
+    }
+    else {
+        add_mod_poly(n, RP, m, P0, n_P - m, P1);
+        add_mod_poly(n, RQ, m, Q0, n_Q - m, Q1);
+    }
     karatsuba_poly_mul_mod(r, n, R, (m < n_P - m ? n_P - m : m), RP,
-                                    (m < n_Q - m ? n_Q - m : m), RQ);
-    // R = R - P0Q0 - P1Q1
-    sub_mod_poly(n, R, max_n_poly, R, 2 * m, P0Q0);
-    sub_mod_poly(n, R, max_n_poly, R, (n_P - m) + (n_Q - m), P0Q0);
+                                    (m < n_Q - m ? n_Q - m : m), RQ, 0);
+    if(square) {
+        for(int i = 0; i < max_n_poly; i++) {
+            mpz_mul_2exp(R[i], R[i], 1);
+            mpz_mod(R[i], R[i], n);
+        }
+    }
+    else {
+        // R = R - P0Q0 - P1Q1
+        sub_mod_poly(n, R, max_n_poly, R, 2 * m, P0Q0);
+        sub_mod_poly(n, R, max_n_poly, R, (n_P - m) + (n_Q - m), P0Q0);
+    }
 
     zero_poly(max_n_poly, result);
     shifted_add_mod_poly(r, n, result, max_n_poly, result, max_n_poly, P0Q0, 0);
@@ -145,20 +158,24 @@ void karatsuba_poly_mul_mod(unsigned long r, mpz_t n, mpz_t* result, unsigned
     poly_free(max_n_poly, P0Q0);
     poly_free(max_n_poly, P1Q1);
     poly_free(max_n_poly, R);
-    poly_free(max_n_poly, RP);
-    poly_free(max_n_poly, RQ);
+    if(!square) {
+        poly_free(max_n_poly, RP);
+        poly_free(max_n_poly, RQ);
+    }
 }
 
 
 // Multiply polynomials P and Q and store into result.
-void poly_mul_mod(unsigned long r, mpz_t n, mpz_t* result, const mpz_t* P, const mpz_t* Q) {
+void poly_mul_mod(unsigned long r, mpz_t n, mpz_t* result, unsigned long n_P,
+        const mpz_t* P, unsigned long n_Q, const mpz_t* Q, int square) {
     zero_poly(r, result);
-    karatsuba_poly_mul_mod(r, n, result, r, P, r, Q);
+    karatsuba_poly_mul_mod(r, n, result, n_P, P, n_Q, Q, square);
 }
 
 // Computes P^k mod X^r - 1 as a polynomial in Z_n[X] using an iterative
 // square and multiply algorithm.
-void poly_pow_mod(unsigned long r, mpz_t n, mpz_t* result, const mpz_t* P, mpz_t k) {
+void poly_pow_mod(unsigned long r, mpz_t n, mpz_t* result, unsigned long n_P,
+        const mpz_t* P, mpz_t k) {
     mpz_t* scratch = (mpz_t*) malloc(r * sizeof(mpz_t));
     mpz_t* base = (mpz_t*) malloc(r * sizeof(mpz_t));
 
@@ -176,20 +193,27 @@ void poly_pow_mod(unsigned long r, mpz_t n, mpz_t* result, const mpz_t* P, mpz_t
         mpz_set(base[i], P[i]);
     }
 
+    unsigned long n_base = n_P;
+    unsigned long n_result = 1;
+
     while(mpz_cmp_ui(k, 1) > 0) {
         if(mpz_odd_p(k)) {
-            poly_mul_mod(r, n, scratch, result, base);
+            poly_mul_mod(r, n, scratch, n_result, result, n_base, base, 0);
             copy_poly(r, result, scratch);
+            n_result = (n_base + n_result);
+            n_result = (n_result > r) ? r : n_result;
             zero_poly(r, scratch);
             mpz_sub_ui(k, k, 1);
         }
-        poly_mul_mod(r, n, scratch, base, base);
+        poly_mul_mod(r, n, scratch, n_base, base, n_base, base, 1);
         copy_poly(r, base, scratch);
+        n_base = 2 * n_base;
+        n_base = (n_base > r) ? r : n_base;
         zero_poly(r, scratch);
         mpz_fdiv_q_2exp(k, k, 1);
     }
 
-    poly_mul_mod(r, n, scratch, result, base);
+    poly_mul_mod(r, n, scratch, n_result, result, n_base, base, 0);
     copy_poly(r, result, scratch);
     poly_free(r, scratch);
     poly_free(r, base);

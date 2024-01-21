@@ -44,7 +44,8 @@ long double log2_mpz(mpz_t n, long double epsilon) {
 }
 
 unsigned long log_square(mpz_t n) {
-    long double lg = log2_mpz(n, 1e-20);
+    long double lg = log2_mpz(n, 1e-10);
+    lg += 1e-10; // Just to be sure we're slightly above log(n)
     lg *= lg;
     return (unsigned long) lg;
 }
@@ -64,7 +65,8 @@ unsigned long euler(unsigned long r) {
                 e *= p - 1;
                 e *= ipow(p, i-1);
             }
-            p++;
+            // Except for 2, you won't find consecutive primes.
+            p += p%2 + 1;
             i = 0;
         }
     }
@@ -113,7 +115,8 @@ unsigned long min_r(mpz_t n) {
         mpz_set_ui(lg2, mpz_sizeinbase(n, 2));
         mpz_mul(lg2, lg2, lg2);
         mpz_set_ui(power, 1);
-        for(mpz_set_ui(k, 1); mpz_cmp_ui(k, log_square(n)) <= 0; mpz_add_ui(k, k, 1)) { 
+        for(mpz_set_ui(k, 1); mpz_cmp_ui(k, log_square(n)) <= 0 && mpz_cmp_ui(k,
+                    r) <= 0; mpz_add_ui(k, k, 1)) { 
             mpz_mul(power, power, n);
             mpz_mod(power, power, big_r);
             if(mpz_cmp_ui(power, 1) == 0) {
