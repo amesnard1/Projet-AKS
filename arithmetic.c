@@ -3,6 +3,10 @@
 #include<math.h>
 #include<stdio.h>
 
+#include"small_primes.h"
+
+unsigned long small_primes[23000] = tab_small_primes; // List of primes <= 2^18
+
 // Integer power
 unsigned long ipow(unsigned long r, unsigned long i) {
     if(i == 0)
@@ -52,21 +56,20 @@ unsigned long log_square(mpz_t n) {
 
 // Euler's totient
 unsigned long euler(unsigned long r) {
-    unsigned long p = 2;
+    unsigned long *p = small_primes;
     unsigned long i = 0;
     unsigned long e = 1;
     while(r > 1) {
-        if(r % p == 0) {
-            r /= p;
+        if(r % *p == 0) {
+            r /= *p;
             i++;
         }
-        if(r % p != 0) {
+        if(r % *p != 0) {
             if(i) {
-                e *= p - 1;
-                e *= ipow(p, i-1);
+                e *= *p - 1;
+                e *= ipow(*p, i-1);
             }
-            // Except for 2, you won't find consecutive primes.
-            p += p%2 + 1;
+            p++;
             i = 0;
         }
     }
@@ -99,7 +102,7 @@ unsigned long min_r(mpz_t n) {
     mpz_init(lg2);
     mpz_init(k);
     mpz_init(power);
-    for(unsigned long r = 2; r > 0 ; r++) {
+    for(unsigned long r = 2; r < (((unsigned long)1)<<36) ; r++) {
         mpz_set_ui(big_r, r);
         mpz_gcd(d, big_r, n);
         if(mpz_cmp_ui(d, 1) && mpz_cmp(d, n)) {
@@ -133,8 +136,7 @@ unsigned long min_r(mpz_t n) {
         return r;
         next_r:
     }
-    // Here, r must have overflowed an unsigned int, which is a case we cannot
-    // handle, so we will produce an error and exit the program.
-    printf("r was not found before overflowing ulong, too big to handle\n");
+    // If r >= 2^36, we would need way too much memory
+    printf("r is too big to handle\n");
     exit(1);
 }
