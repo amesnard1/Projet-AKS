@@ -96,19 +96,16 @@ void bound(mpz_t target, unsigned long r, mpz_t n) {
 // this step, and 1 otherwise (an appropriate r is found)
 unsigned long min_r(mpz_t n) {
     unsigned long lg = mpz_sizeinbase(n, 2) - 1;
-    mpz_t d, big_r, lg2, k, power;
+    mpz_t d, lg2, k, power;
     mpz_init(d);
-    mpz_init(big_r);
     mpz_init(lg2);
     mpz_init(k);
     mpz_init(power);
     for(unsigned long r = 2; r < (((unsigned long)1)<<36) ; r++) {
-        mpz_set_ui(big_r, r);
-        mpz_gcd(d, big_r, n);
+        mpz_gcd_ui(d, n, r);
         if(mpz_cmp_ui(d, 1) && mpz_cmp(d, n)) {
             // mpz_cmp is zero if and only if the two members are equal
             mpz_clear(d);
-            mpz_clear(big_r);
             mpz_clear(lg2);
             mpz_clear(k);
             mpz_clear(power);
@@ -121,7 +118,7 @@ unsigned long min_r(mpz_t n) {
         for(mpz_set_ui(k, 1); mpz_cmp_ui(k, log_square(n)) <= 0 && mpz_cmp_ui(k,
                     r) <= 0; mpz_add_ui(k, k, 1)) { 
             mpz_mul(power, power, n);
-            mpz_mod(power, power, big_r);
+            mpz_mod_ui(power, power, r);
             if(mpz_cmp_ui(power, 1) == 0) {
                 goto next_r; // This r doesn't work, skip to the next one (outer
                              // continue)
@@ -129,7 +126,6 @@ unsigned long min_r(mpz_t n) {
         }
         // This r works, return it.
         mpz_clear(d);
-        mpz_clear(big_r);
         mpz_clear(lg2);
         mpz_clear(k);
         mpz_clear(power);
