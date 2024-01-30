@@ -57,21 +57,20 @@ unsigned long log_square(mpz_t n) {
 // Euler's totient
 unsigned long euler(unsigned long r) {
     unsigned long *p = small_primes;
-    unsigned long i = 0;
+    unsigned long i;
     unsigned long e = 1;
     while(r > 1) {
+        if(*p * *p > r) {
+            e *= r - 1;
+            return e; }
         if(r % *p == 0) {
-            r /= *p;
-            i++;
-        }
-        if(r % *p != 0) {
-            if(i) {
-                e *= *p - 1;
-                e *= ipow(*p, i-1);
-            }
-            p++;
             i = 0;
-        }
+            while(r % *p == 0) {
+                r /= *p;
+                i++;
+            e *= *p - 1;
+            e *= ipow(*p, i-1); } }
+        p++;
     }
     return e;
 }
