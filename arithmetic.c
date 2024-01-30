@@ -6,6 +6,7 @@
 #include"small_primes.h"
 
 unsigned long small_primes[23000] = tab_small_primes; // List of primes <= 2^18
+unsigned long nb_small_primes = 23000;
 
 // Integer power
 unsigned long ipow(unsigned long r, unsigned long i) {
@@ -56,22 +57,22 @@ unsigned long log_square(mpz_t n) {
 
 // Euler's totient
 unsigned long euler(unsigned long r) {
-    unsigned long *p = small_primes;
-    unsigned long i;
     unsigned long e = 1;
-    while(r > 1) {
-        if(*p * *p > r) {
-            e *= r - 1;
-            return e; }
-        if(r % *p == 0) {
-            i = 0;
-            while(r % *p == 0) {
-                r /= *p;
-                i++;
-            e *= *p - 1;
-            e *= ipow(*p, i-1); } }
-        p++;
-    }
+    unsigned long i = 0;
+    unsigned long p;
+    unsigned long j;
+    while ((r != 1) && (i < nb_small_primes)) {
+        p = small_primes[i];
+        if(r % p == 0) {
+            j = 0;
+            while(r % p == 0) {
+                r /= p;
+                j++;
+            e *= p - 1;
+            e *= ipow(p, j-1); } }
+        i++; }
+    if (r != 1)
+      { e *= r - 1; }
     return e;
 }
 
