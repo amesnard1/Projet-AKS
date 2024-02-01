@@ -121,8 +121,7 @@ unsigned long min_r(mpz_t n) {
         mpz_set_ui(lg2, mpz_sizeinbase(n, 2));
         mpz_mul(lg2, lg2, lg2);
         mpz_set_ui(power, 1);
-        for(mpz_set_ui(k, 1); mpz_cmp_ui(k, log_square(n)) <= 0 && mpz_cmp_ui(k,
-                    r) <= 0; mpz_add_ui(k, k, 1)) { 
+        for(mpz_set_ui(k, 1); mpz_cmp_ui(k, log_square(n)) <= 0; mpz_add_ui(k, k, 1)) { 
             mpz_mul(power, power, n);
             mpz_mod_ui(power, power, r);
             if(mpz_cmp_ui(power, 1) == 0) {
