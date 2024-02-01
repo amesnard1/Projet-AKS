@@ -102,8 +102,14 @@ unsigned long min_r(mpz_t n) {
     mpz_init(k);
     mpz_init(power);
     for(unsigned long r = 2; r < (((unsigned long)1)<<36) ; r++) {
+        if (mpz_cmp_ui(n ,r) <= 0) {
+            mpz_clear(d);
+            mpz_clear(lg2);
+            mpz_clear(k);
+            mpz_clear(power);
+            return 1; }
         mpz_gcd_ui(d, n, r);
-        if((mpz_cmp_ui(d, 1) !=0 ) && (mpz_cmp(d, n) != 0)) {
+        if (mpz_cmp_ui(d, 1) !=0 ) {
             // mpz_cmp is zero if and only if the two members are equal
             mpz_clear(d);
             mpz_clear(lg2);

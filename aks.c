@@ -38,9 +38,8 @@ int eqn(unsigned long r, mpz_t n, const mpz_t a) {
 // The actual AKS algorithm
 int is_prime(mpz_t n) {
     if(mpz_perfect_power_p(n)) return 0; // AKS step 1
-    unsigned long r = min_r(n);
-    if(r == 0) return 0; // AKS steps 2 and 3
-    if(mpz_cmp_ui(n, r) <= 0) return 1; // AKS step 4
+    unsigned long r = min_r(n); //AKS step 2
+    if(r <= 1) return r; // AKS steps 3 and 4
     mpz_t limit, a_mpz, remainder;
     mpz_init(limit);
     mpz_init(a_mpz);
