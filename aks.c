@@ -4,6 +4,7 @@
 #include<time.h>
 #include"arithmetic.h"
 #include"polynomial.h"
+#define PROGRESS_INTERVAL 2
 
 
 // Check if the AKS equation for r, n, and a given.
@@ -46,12 +47,21 @@ int is_prime(mpz_t n) {
     mpz_init(remainder);
     bound(limit, r, n);
     unsigned long limit_ui = mpz_get_ui(limit);
+    time_t startTime = time(NULL);
+    time_t currentTime;
     for(unsigned long a = 1; a < limit_ui; a++) { // AKS step 5
         // TODO: add the possibility of a --verbose option to control logging
         //       levels.
+        currentTime = time(NULL);
+        if(currentTime - startTime >= 2) {
+            printf("\rProgress: %d/%d", a, limit_ui);
+            fflush(stdout);
+            startTime = currentTime;
+        }
         mpz_set_ui(a_mpz, a);
         if(!eqn(r, n, a_mpz)) return 0;
     }
+    printf("\n");
     mpz_clear(limit);
     mpz_clear(a_mpz);
     mpz_clear(remainder);
