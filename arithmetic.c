@@ -41,10 +41,17 @@ long double log2_mpz(mpz_t n, long double epsilon) {
         }
         if(m < 64)
             lg += pow((long double)2,(long double)-m);
-        else
+        else {
+            mpf_clear(x_mpf);
+            mpf_clear(y_mpf);
+            mpf_clear(z_mpf);
             return lg;
+        }
         mpf_div_2exp(z_mpf, z_mpf, 1);
     }
+    mpf_clear(x_mpf);
+    mpf_clear(y_mpf);
+    mpf_clear(z_mpf);
     return lg;
 }
 

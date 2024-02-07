@@ -127,6 +127,10 @@ int main() {
     print_poly(r, Q);
     print_poly(r, R);
     print_poly(r, R_);
+    poly_free(r, P);
+    poly_free(r, Q);
+    poly_free(r, R);
+    poly_free(r, R_);
 
     unsigned long known_primes[] = {3, 5, 11, 17, 37, 67, 131, 257, 521, 1031,
         2053, 4099, 8209, 16411, 32771, 65537, 131101, 262147, 524309, 1048583,
@@ -166,5 +170,6 @@ int main() {
     }
         
     mpz_clear(i_mpz);
+    mpz_clear(n);
     return 0;
 }
