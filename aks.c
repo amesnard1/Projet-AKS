@@ -83,25 +83,40 @@ int main() {
     mpz_set_ui(i_mpz, 672629);
     mpz_set_ui(i_mpz, 542497301);
     mpz_set_ui(i_mpz, 54294967291);
-    printf("%d", is_prime(i_mpz));
+    //printf("%d", is_prime(i_mpz));
     clock_t start, end;
 
-//    unsigned long known_primes[] = {2, 5, 11, 23, 47, 97, 197, 397, 797, 1597,
-//        3203, 6421, 12853, 25717, 51437, 102877, 205759, 411527, 823117,
-//        1646237, 3292489, 6584983, 13169977, 26339969, 52679969, 105359939,
-//        210719881, 421439783, 842879579, 1685759167, 3371518343, 6743036717,
-//        13486073473, 26972146961, 53944293929, 107888587883, 215777175787,
-//        431554351609, 863108703229}; // 39
-
-//    unsigned long known_primes[] = {3, 5, 11, 17, 37, 67, 131, 257, 521, 1031,
-//        2053, 4099, 8209, 16411, 32771, 65537, 131101, 262147, 524309, 1048583,
-//        2097169, 4194319, 8388617, 16777259, 33554467, 67108879, 134217757,
-//        268435459, 536870923, 1073741827, 2147483659, 4294967311, 8589934609,
-//        17179869209, 34359738421, 68719476767, 137438953481, 274877906951,
-//        549755813911, 1099511627791, 2199023255579, 4398046511119}; // 42
-
-    // On the edge of what unsigned long can still hold 
-    //
+    unsigned long r = 11;
+    unsigned long n_P = 8;
+    unsigned long n_Q = 3;
+    mpz_set_ui(n, 29);
+    mpz_t* P = (mpz_t*) malloc(r * sizeof(mpz_t));
+    poly_init(r, P);
+    mpz_t* Q = (mpz_t*) malloc(r * sizeof(mpz_t));
+    poly_init(r, Q);
+    mpz_set_ui(P[0], 4);
+    mpz_set_ui(P[7], 1);
+    mpz_set_ui(Q[0], 8);
+    mpz_set_ui(Q[1], 2);
+    mpz_set_ui(Q[2], 27);
+    // P = 4 + X^7
+    // Q = 8 + 2 X + 27 X^2
+    // n = 29
+    // r = 13
+    // R = P * Q mod n mod X^r - 1 = 27*x^9 + 2*x^8 + 8*x^7 + 21*x^2 + 8*x + 3 (sage)
+    // R_ = P^2 mod n mod X^r - 1 = 8*x^7 + x^3 + 16 (sage)
+    mpz_t* R = (mpz_t*) malloc(r * sizeof(mpz_t));
+    mpz_t* R_ = (mpz_t*) malloc(r * sizeof(mpz_t));
+    poly_init(r, R);
+    poly_init(r, R_);
+    //shifted_add_mod_poly(r, n, R, n_P, P, n_Q, Q, 20);
+    printf("P * Q starts here\n");
+    karatsuba_poly_mul_mod(r, n, R, n_P, P, n_Q, Q, 0);
+    karatsuba_poly_mul_mod(r, n, R_, n_P, P, n_P, P, 0);
+    print_poly(r, P);
+    print_poly(r, Q);
+    print_poly(r, R);
+    print_poly(r, R_);
 
     unsigned long known_primes[] = {3, 5, 11, 17, 37, 67, 131, 257, 521, 1031,
         2053, 4099, 8209, 16411, 32771, 65537, 131101, 262147, 524309, 1048583,
@@ -130,7 +145,7 @@ int main() {
         printf("Input test number (base 10): ");
         gmp_scanf("%Zd", i_mpz);
         start = clock();
-        //b = is_prime(i_mpz);
+        b = is_prime(i_mpz);
         end = clock();
         unsigned long r = min_r(i_mpz);
         mpz_t bnd;

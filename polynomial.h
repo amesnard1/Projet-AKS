@@ -12,8 +12,8 @@ void karatsuba_poly_mul_mod(unsigned long r, mpz_t n, mpz_t* result, unsigned lo
 void poly_mul_mod(unsigned long r, mpz_t n, mpz_t* result, unsigned long n_P,
         const mpz_t* P, unsigned long n_Q, const mpz_t* Q, int square);
 void poly_pow_mod(unsigned long r, mpz_t n, mpz_t* result, unsigned long n_P,
-        const mpz_t* P, mpz_t k);
+        const mpz_t* P, const mpz_t k);
 int is_zero_poly(unsigned long r, mpz_t* P);
-void print_poly(unsigned long r, const mpz_t* P, unsigned long k);
+void print_poly(unsigned long r, const mpz_t* P);
 
 #endif
