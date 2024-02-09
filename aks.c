@@ -1,14 +1,16 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include<pthread.h>
 #include<unistd.h>
 #include<time.h>
 #include"arithmetic.h"
 #include"polynomial.h"
 #define PROGRESS_INTERVAL 2
+#define N_THREADS 4
 
 
 // Check if the AKS equation for r, n, and a given.
-int eqn(unsigned long r, mpz_t n, const mpz_t a) {
+int eqn(unsigned long r, const mpz_t n, const mpz_t a) {
     mpz_t a_; mpz_init(a_);
     mpz_mod(a_, a, n);
     mpz_t n_mod_r_mpz;
@@ -29,6 +31,8 @@ int eqn(unsigned long r, mpz_t n, const mpz_t a) {
     mpz_sub(Q[0], Q[0], a);
     mpz_mod(Q[n_mod_r], Q[n_mod_r], n);
     mpz_mod(Q[0], Q[0], n);
+    //print_poly(r, P);
+    //print_poly(r, Q);
     int b = is_zero_poly(r, Q);
     poly_free(r, P); poly_free(r, Q);
     mpz_clear(a_);
@@ -41,32 +45,60 @@ int is_prime(mpz_t n) {
     if(mpz_perfect_power_p(n)) return 0; // AKS step 1
     unsigned long r = min_r(n); //AKS step 2
     if(r <= 1) return r; // AKS steps 3 and 4
-    mpz_t limit, a_mpz, remainder;
+    mpz_t limit;
     mpz_init(limit);
-    mpz_init(a_mpz);
-    mpz_init(remainder);
     bound(limit, r, n);
     unsigned long limit_ui = mpz_get_ui(limit);
     time_t startTime = time(NULL);
     time_t currentTime;
-    for(unsigned long a = 1; a < limit_ui; a++) { // AKS step 5
-        // TODO: add the possibility of a --verbose option to control logging
-        //       levels.
-        currentTime = time(NULL);
-        if(currentTime - startTime >= 2) {
-            printf("\rProgress: %d/%d", a, limit_ui);
-            fflush(stdout);
-            startTime = currentTime;
+    
+    // Shared thread variable stating that there is still no proof that n is
+    // composite.
+    int still_prime = 1;
+    pthread_t threads[N_THREADS];
+    struct thread_arg {
+        int thread_id;
+        mpz_t a_mpz;
+    };
+    struct thread_arg thread_args[N_THREADS];
+
+    void* thread_function(void* args) {
+        struct thread_arg the_args = *((struct thread_arg*) args);
+        int thread_id = the_args.thread_id;
+        for(unsigned long i = 1; i <= limit_ui/N_THREADS; i++) { // AKS step 5
+            // TODO: add the possibility of a --verbose option to control logging
+            //       levels.
+            unsigned long a = i * N_THREADS + thread_id + 1;
+            currentTime = time(NULL);
+            if(currentTime - startTime >= 2) {
+                printf("\rProgress: %d/%d", a, limit_ui);
+                fflush(stdout);
+                startTime = currentTime;
+            }
+            if(!still_prime)
+                return NULL;
+            mpz_set_ui(the_args.a_mpz, a);
+            if(!eqn(r, n, the_args.a_mpz)) {
+                gmp_printf("thread %d: r, n, a = %d, %Zd, %d\n", thread_id, r, n, a);
+                still_prime = 0;
+                return NULL;
+            }
         }
-        mpz_set_ui(a_mpz, a);
-        if(!eqn(r, n, a_mpz)) return 0;
     }
+    
+    for(int i = 0; i < N_THREADS; i++) {
+        thread_args[i].thread_id = i;
+        mpz_init(thread_args[i].a_mpz);
+        pthread_create(&threads[i], NULL, thread_function, &thread_args[i]);
+    }
+
+    for(int i = 0; i < N_THREADS; i++) {
+        pthread_join(threads[i], NULL);
+    }
+
     printf("\n");
     mpz_clear(limit);
-    mpz_clear(a_mpz);
-    mpz_clear(remainder);
-    //printf("\n")
-    return 1;
+    return still_prime;
 }
 
 

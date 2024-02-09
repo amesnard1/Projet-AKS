@@ -119,7 +119,7 @@ void sub_mod_poly(const mpz_t n, mpz_t* result, unsigned long n_P, const mpz_t* 
 // All the coefficients are seen modulo n.
 // Assumes the polynomials are polynomials of length r
 // n_P = deg P + 1
-void naive_poly_mul_mod(unsigned long r, mpz_t n, mpz_t* result, unsigned long
+void naive_poly_mul_mod(unsigned long r, const mpz_t n, mpz_t* result, unsigned long
         n_P, const mpz_t* P, unsigned long n_Q, const mpz_t* Q) {
     mpz_t tmp;
     mpz_init(tmp);
@@ -208,7 +208,7 @@ void karatsuba_poly_mul_mod(unsigned long r, const mpz_t n, mpz_t* result, unsig
 
 
 // Multiply polynomials P and Q and store into result.
-void poly_mul_mod(unsigned long r, mpz_t n, mpz_t* result, unsigned long n_P,
+void poly_mul_mod(unsigned long r, const mpz_t n, mpz_t* result, unsigned long n_P,
         const mpz_t* P, unsigned long n_Q, const mpz_t* Q, int square) {
     zero_poly(r, result);
     karatsuba_poly_mul_mod(r, n, result, n_P, P, n_Q, Q, square);
@@ -216,7 +216,7 @@ void poly_mul_mod(unsigned long r, mpz_t n, mpz_t* result, unsigned long n_P,
 
 // Computes P^k mod X^r - 1 as a polynomial in Z_n[X] using an iterative
 // square and multiply algorithm.
-void poly_pow_mod(unsigned long r, mpz_t n, mpz_t* result, unsigned long n_P,
+void poly_pow_mod(unsigned long r, const mpz_t n, mpz_t* result, unsigned long n_P,
         const mpz_t* P, const mpz_t k) {
     mpz_t* scratch = (mpz_t*) malloc(r * sizeof(mpz_t));
     mpz_t* base = (mpz_t*) malloc(r * sizeof(mpz_t));
