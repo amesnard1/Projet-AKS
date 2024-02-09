@@ -103,15 +103,13 @@ void bound(mpz_t target, unsigned long r, mpz_t n) {
 // this step, and 1 otherwise (an appropriate r is found)
 unsigned long min_r(mpz_t n) {
     unsigned long lg = mpz_sizeinbase(n, 2) - 1;
-    mpz_t d, lg2, k, power;
+    mpz_t d, k, power;
     mpz_init(d);
-    mpz_init(lg2);
     mpz_init(k);
     mpz_init(power);
     for(unsigned long r = 2; r < (((unsigned long)1)<<36) ; r++) {
         if (mpz_cmp_ui(n ,r) <= 0) {
             mpz_clear(d);
-            mpz_clear(lg2);
             mpz_clear(k);
             mpz_clear(power);
             return 1; }
@@ -119,16 +117,14 @@ unsigned long min_r(mpz_t n) {
         if (mpz_cmp_ui(d, 1) !=0 ) {
             // mpz_cmp is zero if and only if the two members are equal
             mpz_clear(d);
-            mpz_clear(lg2);
             mpz_clear(k);
             mpz_clear(power);
             return 0;
         }
         // Check if the order of n in Z_r is more than log^2.
-        mpz_set_ui(lg2, mpz_sizeinbase(n, 2));
-        mpz_mul(lg2, lg2, lg2);
         mpz_set_ui(power, 1);
-        for(mpz_set_ui(k, 1); mpz_cmp_ui(k, log_square(n)) <= 0; mpz_add_ui(k, k, 1)) { 
+        unsigned long log_square_n = log_square(n);
+        for(mpz_set_ui(k, 1); mpz_cmp_ui(k, log_square_n) <= 0; mpz_add_ui(k, k, 1)) { 
             mpz_mul(power, power, n);
             mpz_mod_ui(power, power, r);
             if(mpz_cmp_ui(power, 1) == 0) {
@@ -138,7 +134,6 @@ unsigned long min_r(mpz_t n) {
         }
         // This r works, return it.
         mpz_clear(d);
-        mpz_clear(lg2);
         mpz_clear(k);
         mpz_clear(power);
         return r;
