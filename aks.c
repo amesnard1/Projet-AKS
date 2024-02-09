@@ -6,7 +6,7 @@
 #include"arithmetic.h"
 #include"polynomial.h"
 #define PROGRESS_INTERVAL 2
-#define N_THREADS 4
+#define N_THREADS 10
 
 
 // Check if the AKS equation for r, n, and a given.
